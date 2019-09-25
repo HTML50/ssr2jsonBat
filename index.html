@@ -175,7 +175,7 @@
     <div class="app">
 
       <div class="outputArea">
-        <label class="tip">在这里粘贴多行ss/ssr，或订阅地址</label>
+        <label class="tip">在这里粘贴多行ss/ssr，或订阅地址。批量地址用换行分割。</label>
         <textarea id="input" autofocus="true"></textarea>
       </div>
 
@@ -205,10 +205,9 @@ input.addEventListener('input',function(){
   if(text.startsWith('ssr://') || text.startsWith('ss://')){
     multiSS(text)
   }else if(isBase64(text)){
-    console.log(2)
     subscription(text)
   }else if(text===""){
-    tip.innerHTML = '在此粘贴ssr/ss地址'
+    tip.innerHTML = '在此粘贴ssr/ss/base64/订阅地址'
     tip.classList.remove('error')
     input.classList.remove('error')
   }else{
@@ -244,7 +243,7 @@ input.addEventListener('input',function(){
 
   function subscription(text){
     asyncFromBase64(text,'utf8',function(data){
-      multiSS(data)
+      multiSS(data.trim())
     })
   }
 
@@ -262,7 +261,7 @@ function multiSS(text){
   for(i=0;i<len;i++){
     if(record[i].startsWith('ssr://')) ssrDecode(record[i])
     else if(record[i].startsWith('ss://')) ssDecode(record[i])
-    else err++
+    else {err++;console.log('失败：',i)}
     }
 
     tip.innerHTML = '解析完成!共'+len+'条记录,成功转换'+(len-err)+'条';
@@ -280,7 +279,7 @@ function ssrDecode(text){
     var ip,port,password,group="",obfs="",method="",protocol="",remarks="",protoparam="",obfsparam="",group="",udpport="",uot="";
 
 
-    console.log(data)
+    
     var arr = data.split(':');
     var arr2 = arr[5].split('/?')[1];
 
@@ -291,9 +290,6 @@ function ssrDecode(text){
     obfs=arr[4];     
 
     asyncFromBase64(arr[5].split('/?')[0],'utf8',function(data){
-
-
-      console.log(data)
       password=data;
       result += `{
   "server": "${ip}",
@@ -362,7 +358,7 @@ function showCheck(){
 
 //判断是不是base64
 function isBase64(str) {
-var base64regex = /^([0-9a-zA-Z+/]{4})*(([0-9a-zA-Z+/]{2}==)|([0-9a-zA-Z+/]{3}=)|([0-9a-zA-Z+/]{2}))?$/;
+var base64regex = /^([0-9a-zA-Z+/]{4})*(([0-9a-zA-Z+/]{2}==)|([0-9a-zA-Z+/]{3}=)|([0-9a-zA-Z+/]{3})|([0-9a-zA-Z+/]{2}))?$/;
   if(base64regex.test(str)){
   　　return true
   }
