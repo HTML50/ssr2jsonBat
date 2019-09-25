@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <title>ssr to json batch</title>
+  <style>
+  body {
+    margin: 0;
+  }
+
+  .nav {
+    padding: 10px;
+    height: 20px;
+    background: #e6e6e6;
+    color: #737373;
+    display: flex;
+    justify-content: space-between;
+  }
+
+  .nav a {
+    color: #737373;
+  }
+
+  .app {
+    margin: auto;
+    width: 50vw;
+    padding: 50px;
+  }
+
+  .inputArea {
+    margin: auto;
+    width: 100%;
+  }
+
+  .tip {
+    color: #868686;
+    display: block;
+    transform: translateY(45px);
+    padding: 0 10px;
+    transition: all cubic-bezier(.25, .8, .25, 1) .5s;
+    pointer-events: none;
+    transform-origin: left top;
+    font-size: 18px;
+  }
+
+  .hasFocused {
+    color: #868686;
+    transform: scale(0.8);
+    color: #3ab549;
+  }
+
+  .error {
+    color: red;
+  }
+
+  #input {
+    width: 100%;
+    border: none;
+    border: 2px solid #d8d8d8;
+    outline: none;
+    padding: 10px;
+    transition: all cubic-bezier(.25, .8, .25, 1) .25s;
+  }
+
+  #input:focus {
+    border-color: #3ab549;
+  }
+
+
+  textarea {
+    display: block;
+    width: 100%;
+    margin-top: 10px;
+    padding: 10px;
+    min-height: 40vh;
+    outline: none;
+    font-size: 18px;
+    border: 1px solid #e8e8e8;
+  }
+
+  .buttonArea {
+    text-align: center;
+    margin-top: 10px;
+  }
+
+  .buttonArea button {
+    border: none;
+    padding: 8px;
+    font-size: 18px;
+    outline: none;
+    transition: background 0.3s;
+  }
+
+  .buttonArea button:hover {
+    background: #ccc;
+  }
+  .hide{
+    display: none;
+  }
+
+  .show{
+    display: block;
+  }
+
+  .buttonArea .copyBtn {
+    background: #e6e6e6;
+    cursor: pointer;
+  }
+
+  .not-allowed {
+    cursor: not-allowed !important;
+  }
+
+  .checkAnimation {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    margin: auto;
+    width: 100px;
+    height: 100px;
+    display: none;
+  }
+
+  .check {
+    position: fixed;
+    left: calc(50% - 30px);
+    top: calc(50% + 30px);
+    border: solid 30px #57bf57;
+    width: 200px;
+    height: 100px;
+    margin: -50px 0 0 -100px;
+    border-top: none;
+    border-right: none;
+    transform: rotate(-45deg);
+    transform-origin: top left;
+    box-shadow: -5px 5px 0 0 rgba(204, 204, 204, 0.5);
+    animation: start 1.3s cubic-bezier(.25, .8, .25, 1) infinite both;
+  }
+
+  @keyframes start {
+    0% {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    30% {
+      opacity: 1;
+      width: 0;
+      height: 100px;
+    }
+
+    80% {
+      width: 200px;
+      opacity: 1;
+    }
+
+    100% {
+      opacity: 0;
+    }
+  }
+</style>
+</head>
+
+<body>
+  <div class="nav">
+    <span>ssr/ss/订阅地址/base64批量转JSON</span>
+    <span><a href="//github.com/html50/ssr2jsonBat">Github</a><span>
+    </div>
+
+
+    <div class="app">
+
+      <div class="outputArea">
+        <label class="tip">在这里粘贴多行ss/ssr，或订阅地址</label>
+        <textarea id="input" autofocus="true"></textarea>
+      </div>
+
+      <div class="buttonArea">
+        <button class="copyBtn" id="copy">复制</button>
+      </div>
+    </div>
+
+    <div class="checkAnimation">
+      <div class="check"></div>
+    </div>
+
+    <script src="base64.js"></script>
+    <script>
+      var tip = document.querySelector('.tip'),
+      err = 0,result ="";
+
+      window.onload = function(){
+        tip.classList.add('hasFocused')
+      }
+
+
+//粘贴内容时的变化判断
+input.addEventListener('input',function(){
+  var text = input.value.trim();
+
+  if(text.startsWith('ssr://') || text.startsWith('ss://')){
+    multiSS(text)
+  }else if(isBase64(text)){
+    console.log(2)
+    subscription(text)
+  }else if(text===""){
+    tip.innerHTML = '在此粘贴ssr/ss地址'
+    tip.classList.remove('error')
+    input.classList.remove('error')
+  }else{
+    tip.innerHTML = '请粘贴正确的ssr/ss/base64/订阅地址'
+    tip.classList.add('error')
+    input.classList.add('error')
+  }
+})
+
+
+  //input获得失去焦点
+  input.addEventListener('focus',function(){
+    tip.classList.add('hasFocused')
+  })
+
+  input.addEventListener('blur',function(){
+    if(this.value===''){
+      tip.classList.remove('hasFocused')
+    }
+  })
+
+  //复制按钮
+  copy.addEventListener('click',function(){
+    if(input.textLength!==0){
+      selectAll();
+      document.execCommand('copy');
+      showCheck();
+    }
+  })
+
+
+
+
+  function subscription(text){
+    asyncFromBase64(text,'utf8',function(data){
+      multiSS(data)
+    })
+  }
+
+
+//多行
+function multiSS(text){
+  result = ""
+
+  var record = text.split('\n'),
+  len = record.length;
+
+  //重置错误记录计数器
+  err = 0;
+
+  for(i=0;i<len;i++){
+    if(record[i].startsWith('ssr://')) ssrDecode(record[i])
+    else if(record[i].startsWith('ss://')) ssDecode(record[i])
+    else err++
+    }
+
+    tip.innerHTML = '解析完成!共'+len+'条记录,成功转换'+(len-err)+'条';
+    tip.classList.remove('error');
+    input.classList.remove('error');
+    input.value = result.slice(0,result.length-1)
+  }
+
+
+//解码ssr
+function ssrDecode(text){
+  text = text.slice(6);
+
+  asyncFromBase64(text,'utf8',function(data){
+    var ip,port,password,group="",obfs="",method="",protocol="",remarks="",protoparam="",obfsparam="",group="",udpport="",uot="";
+
+
+    console.log(data)
+    var arr = data.split(':');
+    var arr2 = arr[5].split('/?')[1];
+
+    ip=arr[0];
+    port=arr[1];
+    protocol =arr[2];
+    method =arr[3];
+    obfs=arr[4];     
+
+    asyncFromBase64(arr[5].split('/?')[0],'utf8',function(data){
+
+
+      console.log(data)
+      password=data;
+      result += `
+{
+  "server": "${ip}",
+  "server_port": "${port}",
+  "password": "${password}",
+  "obfs": "${obfs}",
+  "method": "${method}",
+  "protocol": "${protocol}"
+},`
+    },function(err){
+      tip.innerHTML = '第二次decode: '+err;
+    })
+  },
+  function(err){
+    tip.innerHTML = '第一次decode: '+err;
+  });
+}
+
+
+//解码ss
+function ssDecode(text){
+
+  text = text.slice(5);
+  asyncFromBase64(text,'utf8',function(data){
+    var port,password,ip,method="";
+
+    var arr = data.split(':');
+
+    method=arr[0];
+
+    ip=arr[1].split('@')[1];
+    password=arr[1].split('@')[0];
+
+    port=arr[2];
+
+    result += `
+,
+{
+  "server": "${ip}",
+  "server_port": "${port}",
+  "password": "${password}",
+  "method": "${method}"
+},`
+
+  },
+  function(err){
+    tip.innerHTML = err;
+  });
+}
+
+
+//全选json内容
+function selectAll(){
+  input.focus()
+  input.setSelectionRange(0,input.textLength)
+}
+
+
+//复制成功动画
+function showCheck(){
+  document.querySelector('.checkAnimation').style.display= 'block';
+  setTimeout(function(){
+    document.querySelector('.checkAnimation').style.display= 'none';
+  },1300)
+}
+
+
+
+//判断是不是base64
+function isBase64(str) {
+  if (str ==='' || str.trim() ===''){ return false; }
+  try {
+    return btoa(atob(str)) == str;
+  } catch (err) {
+    return false;
+  }
+}
+
+
+
+
+</script>
+</body>
+</html>
