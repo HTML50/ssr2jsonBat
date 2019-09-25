@@ -365,12 +365,11 @@ function showCheck(){
 
 //判断是不是base64
 function isBase64(str) {
-  if (str ==='' || str.trim() ===''){ return false; }
-  try {
-    return btoa(atob(str)) == str;
-  } catch (err) {
-    return false;
+var base64regex = /^([0-9a-zA-Z+/]{4})*(([0-9a-zA-Z+/]{2}==)|([0-9a-zA-Z+/]{3}=)|([0-9a-zA-Z+/]{2}))?$/;
+  if(base64regex.test(str)){
+  　　return true
   }
+  return false
 }
 
 
