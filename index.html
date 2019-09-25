@@ -295,8 +295,7 @@ function ssrDecode(text){
 
       console.log(data)
       password=data;
-      result += `
-{
+      result += `{
   "server": "${ip}",
   "server_port": "${port}",
   "password": "${password}",
@@ -330,9 +329,7 @@ function ssDecode(text){
 
     port=arr[2];
 
-    result += `
-,
-{
+    result += `{
   "server": "${ip}",
   "server_port": "${port}",
   "password": "${password}",
